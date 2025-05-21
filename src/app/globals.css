@@ -24,3 +24,6 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.card { @apply rounded-xl p-6 shadow-lg text-white; }
+

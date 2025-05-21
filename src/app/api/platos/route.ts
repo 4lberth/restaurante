@@ -1,18 +1,26 @@
 import { NextRequest } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
+import * as yup from 'yup'
 
 const prisma = new PrismaClient()
 const secret = process.env.JWT_SECRET || 'default'
 
+// ✅ Esquema de validación con Yup
+const platoSchema = yup.object({
+  name: yup.string().required('Nombre obligatorio').min(3, 'Mínimo 3 caracteres'),
+  price: yup.number().required('Precio obligatorio').positive('Debe ser positivo'),
+  description: yup.string().optional(),
+  categoryId: yup.number().required('Categoría obligatoria').positive().integer()
+})
+
 // GET: listar todos los platos
 export async function GET() {
   const dishes = await prisma.dish.findMany({
-    include: { category: true } // opcional para más info
+    include: { category: true } // opcional
   })
   return Response.json(dishes)
 }
-
 
 // POST: crear un nuevo plato (solo admin)
 export async function POST(req: NextRequest) {
@@ -22,29 +30,25 @@ export async function POST(req: NextRequest) {
   }
 
   const token = auth.split(' ')[1]
+
   try {
     const payload = jwt.verify(token, secret) as { id: number; role: string }
     if (payload.role !== 'admin') {
       return new Response('Acceso denegado', { status: 403 })
     }
 
-    const { name, price, description, categoryId } = await req.json()
+    const body = await req.json()
 
-    if (!name || !price || !categoryId) {
-      return new Response('Faltan campos requeridos', { status: 400 })
-    }
+    // ✅ Validar el body con Yup
+    await platoSchema.validate(body)
 
     const dish = await prisma.dish.create({
-      data: {
-        name,
-        price,
-        description,
-        categoryId,
-      },
+      data: body
     })
 
     return Response.json(dish)
-  } catch {
-    return new Response('Token inválido', { status: 403 })
+  } catch (err: any) {
+    const msg = err?.errors?.[0] || 'Token inválido o datos incorrectos'
+    return new Response(msg, { status: 400 })
   }
 }

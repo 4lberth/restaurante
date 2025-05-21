@@ -25,7 +25,12 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/protegido/:path*', '/api/platos/:path*', '/api/categorias/:path*'],
+  matcher: [
+    '/api/protegido/:path*',
+    '/api/platos/:path*',
+    '/api/categorias/:path*',
+    '/api/mesas/:path*'     
+  ],
 }
 
 

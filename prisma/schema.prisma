@@ -26,6 +26,7 @@ model User {
   password String                               // Contraseña (hasheada)
   role     Role   @relation(fields: [roleId], references: [id]) // Relación con Role
   roleId   Int
+  orders Order[]
 }
 
 model Category {
@@ -42,8 +43,58 @@ model Dish {
   createdAt   DateTime @default(now())
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
 }
 
+enum TableStatus {
+  LIBRE
+  OCUPADA
+}
+
+model Table {
+  id     Int         @id @default(autoincrement())
+  number Int         @unique
+  status TableStatus @default(LIBRE)
+  orders Order[]
+}
+
+enum OrderStatus {
+  PENDIENTE
+  PREPARACION
+  LISTO
+  ENTREGADO
+}
+
+
+model Order {
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now())
+  status      OrderStatus  @default(PENDIENTE)
+  userId      Int
+  tableId     Int
+  customerId  Int?
+  user        User         @relation(fields: [userId], references: [id])
+  table       Table        @relation(fields: [tableId], references: [id])
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id       Int      @id @default(autoincrement())
+  quantity Int
+  subtotal Decimal   @db.Decimal(8,2)
+  orderId  Int
+  dishId   Int
+  order    Order    @relation(fields: [orderId], references: [id])
+  dish     Dish     @relation(fields: [dishId], references: [id])
+}
+
+model Customer {
+  id     Int     @id @default(autoincrement())
+  name   String
+  email  String? @unique
+  orders Order[]
+}
 
 
 

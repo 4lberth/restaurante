@@ -6,24 +6,22 @@ import * as yup from 'yup'
 const prisma = new PrismaClient()
 const secret = process.env.JWT_SECRET || 'default'
 
-const categoriaSchema = yup.object({
-  name: yup.string().required('Nombre obligatorio').min(3, 'Mínimo 3 caracteres')
+// Validación con Yup
+const mesaSchema = yup.object({
+  number: yup.number().required('Número obligatorio').integer('Debe ser entero').positive('Debe ser mayor que 0')
 })
 
-// GET: Listar categorías
+// GET: Listar mesas
 export async function GET() {
-  const categorias = await prisma.category.findMany()
-  return Response.json(categorias)
+  const mesas = await prisma.table.findMany()
+  return Response.json(mesas)
 }
 
-// POST: Crear categoría
+// POST: Crear mesa (solo admin)
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get('authorization')
-  if (!auth?.startsWith('Bearer ')) {
-    return new Response('Token faltante', { status: 401 })
-  }
+  const token = req.headers.get('authorization')?.split(' ')[1]
+  if (!token) return new Response('Token faltante', { status: 401 })
 
-  const token = auth.split(' ')[1]
   try {
     const payload = jwt.verify(token, secret) as { role: string }
     if (payload.role !== 'admin') return new Response('No autorizado', { status: 403 })
@@ -31,10 +29,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
 
     // ✅ Validar entrada
-    await categoriaSchema.validate(body)
+    await mesaSchema.validate(body)
 
-    const cat = await prisma.category.create({ data: body })
-    return Response.json(cat)
+    const nueva = await prisma.table.create({
+      data: {
+        number: body.number,
+        status: 'LIBRE'
+      }
+    })
+
+    return Response.json(nueva)
   } catch (err: any) {
     const msg = err?.errors?.[0] || 'Token inválido o datos incorrectos'
     return new Response(msg, { status: 400 })

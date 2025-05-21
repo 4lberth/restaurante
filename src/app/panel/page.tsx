@@ -5,12 +5,13 @@ import { useAuth } from '@/context/auth'
 import { useRouter } from 'next/navigation'
 import PlatosPage from './platos/page'
 import CategoriasPage from './categorias/page'
+import MozoPage from './mozo/page'
 
 export default function Panel() {
-  const { setUser } = useAuth()
+  const { user, setUser } = useAuth()
   const router = useRouter()
 
-  const [seccion, setSeccion] = useState<'platos' | 'categorias' | null>('platos')
+  const [seccion, setSeccion] = useState<'platos' | 'categorias' | 'mozo' | null>('platos')
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -26,22 +27,37 @@ export default function Panel() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Navegación</h3>
             <ul className="space-y-2 text-sm text-white">
-              <li>
-                <button
-                  onClick={() => setSeccion('platos')}
-                  className="text-left w-full hover:underline text-emerald-400"
-                >
-                  🍽 Platos
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setSeccion('categorias')}
-                  className="text-left w-full hover:underline text-emerald-400"
-                >
-                  📂 Categorías
-                </button>
-              </li>
+              {user?.role === 'admin' && (
+                <>
+                  <li>
+                    <button
+                      onClick={() => setSeccion('platos')}
+                      className="text-left w-full hover:underline text-emerald-400"
+                    >
+                      🍽 Platos
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => setSeccion('categorias')}
+                      className="text-left w-full hover:underline text-emerald-400"
+                    >
+                      📂 Categorías
+                    </button>
+                  </li>
+                </>
+              )}
+
+              {user?.role === 'mozo' && (
+                <li>
+                  <button
+                    onClick={() => setSeccion('mozo')}
+                    className="text-left w-full hover:underline text-emerald-400"
+                  >
+                    🧍‍♂️ Tomar Orden (Mozo)
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -76,6 +92,13 @@ export default function Panel() {
               </div>
             </section>
           </RoleGuard>
+
+          {user?.role === 'mozo' && seccion === 'mozo' && (
+            <section className="card bg-emerald-700/40">
+              <h2 className="text-lg font-bold mb-4">Panel del Mozo</h2>
+              <MozoPage />
+            </section>
+          )}
         </div>
       </div>
     </main>

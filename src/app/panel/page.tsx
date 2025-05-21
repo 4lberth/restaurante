@@ -1,12 +1,16 @@
-'use client'                       // 👈  añade esto en la primera línea
+'use client'
+import { useState } from 'react'
 import RoleGuard from '@/components/RoleGuard'
 import { useAuth } from '@/context/auth'
 import { useRouter } from 'next/navigation'
-
+import PlatosPage from './platos/page'
+import CategoriasPage from './categorias/page'
 
 export default function Panel() {
   const { setUser } = useAuth()
-  const router      = useRouter()
+  const router = useRouter()
+
+  const [seccion, setSeccion] = useState<'platos' | 'categorias' | null>('platos')
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -15,38 +19,65 @@ export default function Panel() {
   }
 
   return (
-    <main className="p-6 space-y-6">
-      <button
-        onClick={logout}
-        className="fixed top-4 right-4 text-sm underline text-emerald-400"
-      >
-        Cerrar sesión
-      </button>
+    <main className="p-6">
+      <div className="grid grid-cols-[240px_1fr] gap-4">
+        {/* 🟩 Barra lateral */}
+        <aside className="space-y-6 bg-gray-900 p-4 rounded-xl flex flex-col justify-between h-full">
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Navegación</h3>
+            <ul className="space-y-2 text-sm text-white">
+              <li>
+                <button
+                  onClick={() => setSeccion('platos')}
+                  className="text-left w-full hover:underline text-emerald-400"
+                >
+                  🍽 Platos
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setSeccion('categorias')}
+                  className="text-left w-full hover:underline text-emerald-400"
+                >
+                  📂 Categorías
+                </button>
+              </li>
+            </ul>
+          </div>
 
-      <section className="card bg-gray-800">
-        Dashboard común (todos los usuarios)
-      </section>
+          {/* 🔴 Botón de cerrar sesión */}
+          <button
+            onClick={logout}
+            className="text-left text-sm underline text-red-400"
+          >
+            Cerrar sesión
+          </button>
+        </aside>
 
-      <RoleGuard allow={['mozo']}>
-        <section className="card bg-emerald-700/40">
-          <h2 className="text-lg font-semibold mb-2">Panel de mozo</h2>
-          <p>Pedidos de mesa, cambio de estado…</p>
-        </section>
-      </RoleGuard>
+        {/* 🟦 Contenido */}
+        <div className="space-y-6">
+          <RoleGuard allow={['admin']}>
+            <section className="card bg-purple-700/40">
+              <h2 className="text-lg font-bold mb-4">Panel de Administración</h2>
 
-      <RoleGuard allow={['chef']}>
-        <section className="card bg-orange-600/40">
-          <h2 className="text-lg font-semibold mb-2">Panel de chef</h2>
-          <p>Órdenes para preparar, tiempos de cocción…</p>
-        </section>
-      </RoleGuard>
-
-      <RoleGuard allow={['admin']}>
-        <section className="card bg-purple-700/40">
-          <h2 className="text-lg font-semibold mb-2">Administración</h2>
-          <p>Gestión de usuarios, reportes, configuración…</p>
-        </section>
-      </RoleGuard>
+              <div className="mt-6">
+                {seccion === 'platos' && (
+                  <>
+                    <h3 className="text-md font-bold mb-2">🍽 Lista de Platos</h3>
+                    <PlatosPage />
+                  </>
+                )}
+                {seccion === 'categorias' && (
+                  <>
+                    <h3 className="text-md font-bold mb-2">📂 Lista de Categorías</h3>
+                    <CategoriasPage />
+                  </>
+                )}
+              </div>
+            </section>
+          </RoleGuard>
+        </div>
+      </div>
     </main>
   )
 }
